@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hola mundo</title>
+  <script src="js/phaser.js"></script>
+  <style type="text/css">
+      body {
+          margin: 0;
+      }
+  </style>
+</head>
+<body>
+  <script>
+
+      var game = new Phaser.Game(800,600,Phaser.AUTO,'',{preload: preload, create:create, update: update });
+      function preload(){
+        game.load.image('sky','imagenes/sky.png');
+        game.load.image('ground','imagenes/platform.png');
+        game.load.image('star','imagenes/star.png');
+        game.load.spritesheet('dude','imagenes/dude.png',32,48);
+      }
+
+      var platforms;
+      var player;
+      var cursors;
+      var stars;
+      var score=0;
+      var scoreText;
+
+      function create(){
+      //sprite siempre se pone como base de juego por sus propiedades y metodos, jugador
+        //fisica sistema arcade
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+
+        //fondo del juego
+        game.add.sprite(0,0,'sky');
+
+        //grupo de plataformas
+        platforms = game.add.group();
+
+        //fisica para cualquier objeto que se crea
+        platforms.enableBody = true;
+
+        //crear el suelo
+        var ground = platforms.create(0, game.world.height - 64, 'ground');
+
+        //ajustar al ancho del juego
+        ground.scale.setTo(2,2);
+
+        //evitar que caiga el jugador
+        ground.body.immovable = true;
+
+        //crear 2 repisas(ledges)
+        var ledge= platforms.create(400,400,'ground');
+
+        ledge.body.immovable = true;
+
+        ledge = platforms.create(-150, 250, 'ground');
+
+        ledge.body.immovable = true;
+
+        //jugador y configuracion
+        player = game.add.sprite(32,game.world.height-150,'dude');
+
+        //fisica en el jugador
+        game.physics.arcade.enable(player);
+
+        //propiedades fisicas en el jugador
+        player.body.bounce.y=0.2;
+        player.body.gravity.y=300;
+        player.body.collideWorldBounds = true;
+
+        //animaciones , caminar izquierda y derecha
+        player.animations.add('left',[0,1,2,3],10,true);
+        player.animations.add('right',[5,6,7,8],10,true);
+
+
+        //  Crear estrellas
+        stars = game.add.group();
+
+        //  fisica para todas las estrellas que se crean
+        stars.enableBody = true;
+
+        //  Crear 12 estrellas en el espacio
+        for (var i = 0; i < 12; i++)
+        {
+          //  Crear estrellas
+          var star = stars.create(i * 70, 0, 'star');
+
+          // gravedad para las estrellas
+          star.body.gravity.y = 300;
+
+          //  rebote al azar de estrellas
+          star.body.bounce.y = 0.7 + Math.random() * 0.2;
+        }
+
+        // agregar score
+        scoreText = game.add.text (16, 16, 'score: 0', {fontSize: '32px', fill: '# 000'});
+
+        //gestor de teclado phaser
+        cursors = game.input.keyboard.createCursorKeys();
+
+      }
+
+      function update(){
+        //colision con plataforma
+        game.physics.arcade.collide(player, platforms);
+        game.physics.arcade.collide(stars,platforms);
+
+        //jugador se superpone a la estrella
+        game.physics.arcade.overlap(player, stars, collectStar, null, this);
+
+        //cambiar velocidad de los jugadores
+        player.body.velocity.x=0;
+
+        if(cursors.left.isDown){
+          //mover a la izquierda
+          player.body.velocity.x=-150;
+          player.animations.play('left');
+        }
+        else if(cursors.right.isDown){
+          //mover a la derecha
+          player.body.velocity.x=150;
+          player.animations.play('right');
+        }
+        else{
+          //quieto
+          player.animations.stop();
+          player.frame=4;
+        }
+
+        //saltar y tocar una plataformas
+        if(cursors.up.isDown && player.body.touching.down){
+          player.body.velocity.y=-350
+        }
+      }
+
+      function collectStar(player,star){
+        //quitar estrella de la pantalla
+        star.kill();
+
+        //añadir y actualizar score
+        score += 10;
+        scoreText.text='Score: '+ score;
+      }
+
+  </script>
+</body>
+</html>
